@@ -20,21 +20,24 @@ public class ZoronMemoryOptimizer: NSObject {
         
         guard let method = class_getInstanceMethod(cls, sel) else { return }
         
-        let customFunction: @convention(c) (UIViewController, Selector) -> Void = { (selfObj, _cmd) in
-            // Intercept Memory Warning, clear our custom caches
-            ZoronMemoryOptimizer.forceGarbageCollection()
-            
-            // Call original
-            let originalIMP = class_getMethodImplementation(cls, sel)
-            typealias OriginalFunction = @convention(c) (UIViewController, Selector) -> Void
-            let original = unsafeBitCast(originalIMP, to: OriginalFunction.self)
-            original(selfObj, _cmd)
-        }
+        let originalIMP = class_getMethodImplementation(cls, sel)
+        originalMemoryWarningIMP = unsafeBitCast(originalIMP, to: MemoryWarningFunction.self)
         
+        let customFunction: MemoryWarningFunction = zoron_memory_warning_hook
         let swizzledIMP: IMP = unsafeBitCast(customFunction, to: IMP.self)
         method_setImplementation(method, swizzledIMP)
         print("[ZoronPerformanceBooster] 🧠 Memory Optimizer Engine Hooked & Active!")
     }
+}
+
+typealias MemoryWarningFunction = @convention(c) (UIViewController, Selector) -> Void
+private var originalMemoryWarningIMP: MemoryWarningFunction?
+
+private func zoron_memory_warning_hook(_ selfObj: UIViewController, _ _cmd: Selector) {
+    ZoronMemoryOptimizer.forceGarbageCollection()
+    originalMemoryWarningIMP?(selfObj, _cmd)
+}
+
     
     public static func forceGarbageCollection() {
         // Clear Foundation Caches
