@@ -28,16 +28,6 @@ public class ZoronMemoryOptimizer: NSObject {
         method_setImplementation(method, swizzledIMP)
         print("[ZoronPerformanceBooster] 🧠 Memory Optimizer Engine Hooked & Active!")
     }
-}
-
-typealias MemoryWarningFunction = @convention(c) (UIViewController, Selector) -> Void
-private var originalMemoryWarningIMP: MemoryWarningFunction?
-
-private func zoron_memory_warning_hook(_ selfObj: UIViewController, _ _cmd: Selector) {
-    ZoronMemoryOptimizer.forceGarbageCollection()
-    originalMemoryWarningIMP?(selfObj, _cmd)
-}
-
     
     public static func forceGarbageCollection() {
         // Clear Foundation Caches
@@ -54,4 +44,12 @@ private func zoron_memory_warning_hook(_ selfObj: UIViewController, _ _cmd: Sele
             onMemoryCleared?(cleared)
         }
     }
+}
+
+typealias MemoryWarningFunction = @convention(c) (UIViewController, Selector) -> Void
+private var originalMemoryWarningIMP: MemoryWarningFunction?
+
+private func zoron_memory_warning_hook(_ selfObj: UIViewController, _ _cmd: Selector) {
+    ZoronMemoryOptimizer.forceGarbageCollection()
+    originalMemoryWarningIMP?(selfObj, _cmd)
 }
